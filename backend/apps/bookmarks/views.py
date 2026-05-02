@@ -20,7 +20,7 @@ class BookmarkViewSet(viewsets.ModelViewSet):
 
     def perform_create(self, serializer):
         bookmark = serializer.save(user=self.request.user)
-        publish_scrape_job(bookmark.id, bookmark.url)
+        publish_scrape_job(bookmark.id, bookmark.url, self.request.user.email)
 
     @action(detail=True, methods=["patch"], permission_classes=[permissions.AllowAny])
     def update_scraped(self, request, pk=None):

@@ -4,7 +4,7 @@ import redis
 from django.conf import settings
 
 
-def publish_scrape_job(bookmark_id: int, url: str) -> None:
+def publish_scrape_job(bookmark_id: int, url: str, email: str) -> None:
     """Publish scraping job to Redis for scraping service."""
     r = redis.from_url(settings.CELERY_BROKER_URL)
     r.publish(
@@ -13,6 +13,7 @@ def publish_scrape_job(bookmark_id: int, url: str) -> None:
             {
                 "bookmark_id": bookmark_id,
                 "url": url,
+                "email": email,
             }
         ),
     )

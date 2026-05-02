@@ -85,6 +85,8 @@ async def listen_for_scraping_jobs() -> None:
                             {
                                 "bookmark_id": bookmark_id,
                                 "title": scraped["title"],
+                                "description": scraped["description"],
+                                "email": data.get("email"),
                             }
                         ),
                     )

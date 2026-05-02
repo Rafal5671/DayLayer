@@ -1,0 +1,22 @@
+{% extends "base.html" %} {% block content %}
+<h1>Welcome to Daylayer, {{ username }}</h1>
+<p>
+    Your account has been created successfully. Daylayer is your personal space
+    to capture notes, manage tasks, and save bookmarks — all in one place.
+</p>
+
+<div class="card">
+    <div class="card-title">Your account</div>
+    <div class="card-content">{{ email }}</div>
+</div>
+
+<p><strong>Notes</strong> — Capture ideas in Markdown</p>
+<p><strong>Tasks</strong> — Manage your to-dos with priorities and deadlines</p>
+<p>
+    <strong>Bookmarks</strong> — Save links and we'll fetch the details for you
+</p>
+
+<div class="divider"></div>
+
+<a href="http://localhost:5173" class="btn">Open Daylayer</a>
+{% endblock %}

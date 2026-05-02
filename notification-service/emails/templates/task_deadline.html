@@ -1,0 +1,21 @@
+{% extends "base.html" %} {% block content %}
+<h1>Tasks due today</h1>
+<p>
+    Hey {{ username }}, you have <strong>{{ task_count }} task(s)</strong> due
+    today.
+</p>
+
+<ul class="task-list">
+    {% for task in tasks %}
+    <li>
+        <span class="dot"></span>
+        {{ task.title }}
+        <span class="priority {{ task.priority }}">{{ task.priority }}</span>
+    </li>
+    {% endfor %}
+</ul>
+
+<div class="divider"></div>
+
+<a href="http://localhost:5173/tasks" class="btn">View tasks</a>
+{% endblock %}
