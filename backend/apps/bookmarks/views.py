@@ -1,5 +1,5 @@
-from django.shortcuts import render
-from rest_framework import viewsets
+from django.conf import settings
+from rest_framework import permissions, status, viewsets
 from rest_framework.decorators import action
 from rest_framework.response import Response
 
@@ -21,14 +21,19 @@ class BookmarkViewSet(viewsets.ModelViewSet):
     def perform_create(self, serializer):
         bookmark = serializer.save(user=self.request.user)
         publish_scrape_job(bookmark.id, bookmark.url)
-        @action(
-                detail=True,
-                methods=["patch"],
-                permission_classes=[permissions.AllowAny]
-            )
+
+    @action(detail=True, methods=["patch"], permission_classes=[permissions.AllowAny])
     def update_scraped(self, request, pk=None):
         """Internal endpoint for scraping service to update bookmark."""
-        bookmark = self.get_object()
+        secret = request.headers.get("X-Internal-Secret")
+        if secret != settings.INTERNAL_SERVICE_SECRET:
+            return Response({"detail": "Forbidden"}, status=status.HTTP_403_FORBIDDEN)
+
+        try:
+            bookmark = Bookmark.objects.get(pk=pk)
+        except Bookmark.DoesNotExist:
+            return Response({"detail": "Not found"}, status=status.HTTP_404_NOT_FOUND)
+
         bookmark.title = request.data.get("title", bookmark.title)
         bookmark.description = request.data.get("description", bookmark.description)
         bookmark.thumbnail = request.data.get("thumbnail", bookmark.thumbnail)

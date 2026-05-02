@@ -1,6 +1,7 @@
 import asyncio
 import json
 import os
+from contextlib import asynccontextmanager
 
 import httpx
 import redis.asyncio as aioredis
@@ -10,8 +11,6 @@ from dotenv import load_dotenv
 from fastapi import FastAPI
 
 load_dotenv()
-
-app = FastAPI(title="Daylayer Scraping Service")
 
 REDIS_URL = os.getenv("REDIS_URL", "redis://localhost:6379/0")
 DJANGO_API_URL = os.getenv("DJANGO_API_URL", "http://localhost:8000/api")
@@ -43,11 +42,13 @@ def scrape_url(url: str) -> dict:
 
 async def update_bookmark(bookmark_id: int, data: dict) -> None:
     """Send scraped data back to Django API."""
+    secret = os.getenv("INTERNAL_SERVICE_SECRET")
     async with httpx.AsyncClient() as client:
         try:
             await client.patch(
                 f"{DJANGO_API_URL}/bookmarks/{bookmark_id}/update_scraped/",
                 json=data,
+                headers={"X-Internal-Secret": secret},
                 timeout=10,
             )
             print(f"Bookmark {bookmark_id} updated successfully")
@@ -63,35 +64,53 @@ async def listen_for_scraping_jobs() -> None:
 
     print("Scraping service listening for jobs...")
 
-    async for message in pubsub.listen():
-        if message["type"] == "message":
-            try:
-                data = json.loads(message["data"])
-                bookmark_id = data["bookmark_id"]
-                url = data["url"]
+    try:
+        while True:
+            message = await pubsub.get_message(
+                ignore_subscribe_messages=True, timeout=1.0
+            )
+            if message is not None:
+                try:
+                    data = json.loads(message["data"])
+                    bookmark_id = data["bookmark_id"]
+                    url = data["url"]
 
-                print(f"Scraping bookmark {bookmark_id}: {url}")
-                scraped = scrape_url(url)
-                await update_bookmark(bookmark_id, scraped)
+                    print(f"Scraping bookmark {bookmark_id}: {url}")
+                    scraped = scrape_url(url)
+                    await update_bookmark(bookmark_id, scraped)
 
-                # Publish event for notification service
-                await redis.publish(
-                    "bookmark.scraped",
-                    json.dumps(
-                        {
-                            "bookmark_id": bookmark_id,
-                            "title": scraped["title"],
-                        }
-                    ),
-                )
+                    await redis.publish(
+                        "bookmark.scraped",
+                        json.dumps(
+                            {
+                                "bookmark_id": bookmark_id,
+                                "title": scraped["title"],
+                            }
+                        ),
+                    )
 
-            except Exception as e:
-                print(f"Error processing job: {e}")
+                except Exception as e:
+                    print(f"Error processing job: {e}")
+
+            await asyncio.sleep(0.1)
+
+    except asyncio.CancelledError:
+        await pubsub.unsubscribe("bookmark.scrape")
+        await redis.close()
 
 
-@app.on_event("startup")
-async def startup_event():
-    asyncio.create_task(listen_for_scraping_jobs())
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    task = asyncio.create_task(listen_for_scraping_jobs())
+    yield
+    task.cancel()
+    try:
+        await task
+    except asyncio.CancelledError:
+        pass
+
+
+app = FastAPI(title="Daylayer Scraping Service", lifespan=lifespan)
 
 
 @app.get("/health")
