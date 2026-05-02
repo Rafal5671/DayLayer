@@ -23,4 +23,5 @@ urlpatterns = [
     path("api/users/", include("apps.users.urls")),
     path("api/notes/", include("apps.notes.urls")),
     path("api/tasks/", include("apps.tasks.urls")),
+    path("api/bookmarks/", include("apps.bookmarks.urls")),
 ]
