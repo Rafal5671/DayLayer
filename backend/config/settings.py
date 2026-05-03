@@ -45,6 +45,7 @@ INSTALLED_APPS = [
     "django.contrib.staticfiles",
     "django_celery_beat",
     "rest_framework",
+    "drf_spectacular",
     "corsheaders",
     "apps.users",
     "apps.notes",
@@ -141,6 +142,7 @@ REST_FRAMEWORK = {
         "rest_framework_simplejwt.authentication.JWTAuthentication",
     ),
     "DEFAULT_PERMISSION_CLASSES": ("rest_framework.permissions.IsAuthenticated",),
+    "DEFAULT_SCHEMA_CLASS": "drf_spectacular.openapi.AutoSchema",
 }
 
 # CORS
@@ -160,4 +162,11 @@ CELERY_BEAT_SCHEDULE = {
         "task": "apps.tasks.tasks.check_deadlines",
         "schedule": crontab(hour=8, minute=0),
     },
+}
+
+# Swagger
+SPECTACULAR_SETTINGS = {
+    "TITLE": "Daylayer API",
+    "DESCRIPTION": "Personal second brain — notes, tasks and bookmarks API",
+    "VERSION": "1.0.0",
 }
