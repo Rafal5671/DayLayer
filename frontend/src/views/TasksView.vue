@@ -36,31 +36,8 @@
           v-for="task in filteredTasks"
           :key="task.id"
           class="bg-white border border-gray-100 rounded-xl px-5 py-4 flex items-center gap-4"
+          :class="{ 'opacity-50': task.status === 'done' }"
         >
-          <button
-            @click="toggleTask(task)"
-            class="w-5 h-5 rounded border-2 shrink-0 flex items-center justify-center transition-colors"
-            :class="
-              task.status === 'done'
-                ? 'bg-purple-600 border-purple-600'
-                : 'border-gray-300 hover:border-purple-400'
-            "
-          >
-            <svg
-              v-if="task.status === 'done'"
-              class="w-3 h-3 text-white"
-              viewBox="0 0 10 8"
-              fill="none"
-            >
-              <path
-                d="M1 4l3 3 5-6"
-                stroke="currentColor"
-                stroke-width="1.5"
-                stroke-linecap="round"
-              />
-            </svg>
-          </button>
-
           <div class="flex-1 min-w-0">
             <p
               class="text-sm text-gray-800"
@@ -68,21 +45,38 @@
             >
               {{ task.title }}
             </p>
-            <p v-if="task.deadline" class="text-xs text-gray-400 mt-0.5">
-              Due {{ formatDate(task.deadline) }}
-            </p>
+            <div class="flex items-center gap-3 mt-1">
+              <p v-if="task.deadline" class="text-xs text-gray-400">
+                Due {{ formatDate(task.deadline) }}
+              </p>
+              <span
+                class="text-xs px-2 py-0.5 rounded font-medium"
+                :class="{
+                  'bg-red-50 text-red-700': task.priority === 'high',
+                  'bg-amber-50 text-amber-700': task.priority === 'medium',
+                  'bg-green-50 text-green-700': task.priority === 'low',
+                }"
+              >
+                {{ task.priority }}
+              </span>
+            </div>
           </div>
 
-          <span
-            class="text-xs px-2 py-0.5 rounded font-medium shrink-0"
-            :class="{
-              'bg-red-50 text-red-700': task.priority === 'high',
-              'bg-amber-50 text-amber-700': task.priority === 'medium',
-              'bg-green-50 text-green-700': task.priority === 'low',
-            }"
-          >
-            {{ task.priority }}
-          </span>
+          <div class="flex items-center gap-2 shrink-0">
+            <button
+              v-for="s in statuses"
+              :key="s.value"
+              @click="setStatus(task, s.value)"
+              class="text-xs px-3 py-1.5 rounded-lg transition-colors border"
+              :class="
+                task.status === s.value
+                  ? s.activeClass
+                  : 'border-gray-100 text-gray-400 hover:border-gray-200 hover:text-gray-600'
+              "
+            >
+              {{ s.label }}
+            </button>
+          </div>
 
           <button
             @click="openModal(task)"
@@ -200,6 +194,16 @@ const filters = [
   { label: "Done", value: "done" },
 ];
 
+const statuses = [
+  { value: "todo", label: "To do", activeClass: "border-gray-400 text-gray-700 bg-gray-50" },
+  {
+    value: "in_progress",
+    label: "In progress",
+    activeClass: "border-amber-400 text-amber-700 bg-amber-50",
+  },
+  { value: "done", label: "Done", activeClass: "border-purple-400 text-purple-700 bg-purple-50" },
+];
+
 const form = ref({
   title: "",
   description: "",
@@ -241,9 +245,8 @@ function closeModal() {
   editingTask.value = null;
 }
 
-async function toggleTask(task: Task) {
-  const newStatus = task.status === "done" ? "todo" : "done";
-  const { data } = await api.patch(`/tasks/${task.id}/`, { status: newStatus });
+async function setStatus(task: Task, status: string) {
+  const { data } = await api.patch(`/tasks/${task.id}/`, { status });
   const index = tasks.value.findIndex((t) => t.id === task.id);
   tasks.value[index] = data;
 }

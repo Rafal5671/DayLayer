@@ -11,12 +11,12 @@
         </button>
       </div>
 
-      <div class="mb-4 flex gap-3">
+      <div class="mb-6">
         <input
           v-model="search"
           type="text"
           placeholder="Search notes..."
-          class="flex-1 px-3 py-2 text-sm border border-gray-200 rounded-lg outline-none focus:border-purple-400 transition-colors"
+          class="w-full px-3 py-2 text-sm border border-gray-200 rounded-lg outline-none focus:border-purple-400 transition-colors"
         />
       </div>
 
@@ -28,12 +28,15 @@
         <div
           v-for="note in filteredNotes"
           :key="note.id"
-          class="bg-white border border-gray-100 rounded-xl p-5 cursor-pointer hover:border-purple-200 transition-colors"
-          @click="openModal(note)"
+          class="bg-white border border-gray-100 rounded-xl p-5 cursor-pointer hover:border-purple-200 hover:shadow-sm transition-all flex flex-col gap-3"
+          @click="openNote(note)"
         >
-          <h3 class="text-sm font-medium text-gray-900 mb-2 truncate">{{ note.title }}</h3>
-          <p class="text-xs text-gray-400 line-clamp-3 mb-4">{{ note.content }}</p>
-          <div class="flex items-center justify-between">
+          <h3 class="text-sm font-medium text-gray-900 truncate">{{ note.title }}</h3>
+          <div
+            class="text-xs text-gray-400 line-clamp-4 flex-1 prose prose-xs max-w-none"
+            v-html="renderPreview(note.content)"
+          />
+          <div class="flex items-center justify-between mt-auto">
             <div class="flex gap-1 flex-wrap">
               <span
                 v-for="tag in parseTags(note.tags)"
@@ -43,7 +46,7 @@
                 {{ tag }}
               </span>
             </div>
-            <span class="text-xs text-gray-400">{{ formatDate(note.updated_at) }}</span>
+            <span class="text-xs text-gray-300">{{ formatDate(note.updated_at) }}</span>
           </div>
         </div>
       </div>
@@ -51,55 +54,105 @@
 
     <div
       v-if="showModal"
-      class="fixed inset-0 bg-black/30 flex items-center justify-center z-50"
+      class="fixed inset-0 bg-black/40 flex items-center justify-center z-50"
       @click.self="closeModal"
     >
-      <div class="bg-white rounded-xl w-full max-w-lg p-6 shadow-xl">
-        <h2 class="text-base font-medium text-gray-900 mb-4">
-          {{ editingNote ? "Edit note" : "New note" }}
-        </h2>
-
-        <div class="mb-3">
+      <div class="bg-white rounded-xl w-full max-w-4xl mx-4 flex flex-col" style="height: 85vh">
+        <div class="flex items-center justify-between px-6 py-4 border-b border-gray-100">
           <input
             v-model="form.title"
             type="text"
-            placeholder="Title"
-            class="w-full px-3 py-2 text-sm border border-gray-200 rounded-lg outline-none focus:border-purple-400 transition-colors"
+            placeholder="Note title"
+            class="text-lg font-medium text-gray-900 outline-none flex-1 placeholder:text-gray-300"
           />
-        </div>
-
-        <div class="mb-3">
-          <textarea
-            v-model="form.content"
-            placeholder="Write your note in Markdown..."
-            rows="8"
-            class="w-full px-3 py-2 text-sm border border-gray-200 rounded-lg outline-none focus:border-purple-400 transition-colors resize-none font-mono"
-          />
-        </div>
-
-        <div class="mb-5">
-          <input
-            v-model="form.tags"
-            type="text"
-            placeholder="Tags, separated by commas"
-            class="w-full px-3 py-2 text-sm border border-gray-200 rounded-lg outline-none focus:border-purple-400 transition-colors"
-          />
-        </div>
-
-        <div class="flex items-center justify-between">
-          <button
-            v-if="editingNote"
-            @click="deleteNote"
-            class="text-sm text-red-500 hover:text-red-700 transition-colors"
-          >
-            Delete
-          </button>
-          <div class="flex gap-3 ml-auto">
+          <div class="flex items-center gap-3 ml-4">
+            <button
+              @click="activeTab = 'write'"
+              class="text-xs px-3 py-1.5 rounded-lg transition-colors"
+              :class="
+                activeTab === 'write'
+                  ? 'bg-purple-600 text-white'
+                  : 'text-gray-400 hover:text-gray-600'
+              "
+            >
+              Write
+            </button>
+            <button
+              @click="activeTab = 'preview'"
+              class="text-xs px-3 py-1.5 rounded-lg transition-colors"
+              :class="
+                activeTab === 'preview'
+                  ? 'bg-purple-600 text-white'
+                  : 'text-gray-400 hover:text-gray-600'
+              "
+            >
+              Preview
+            </button>
             <button
               @click="closeModal"
-              class="px-4 py-2 text-sm text-gray-500 hover:text-gray-700 transition-colors"
+              class="text-gray-300 hover:text-gray-500 transition-colors ml-2"
             >
-              Cancel
+              <svg
+                class="w-5 h-5"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2"
+              >
+                <path d="M18 6L6 18M6 6l12 12" />
+              </svg>
+            </button>
+          </div>
+        </div>
+
+        <div class="flex-1 overflow-hidden">
+          <textarea
+            v-if="activeTab === 'write'"
+            v-model="form.content"
+            placeholder="Write your note in Markdown...
+
+# Heading
+**bold**, *italic*
+- list item
+```code```"
+            class="w-full h-full px-6 py-4 text-sm text-gray-700 outline-none resize-none font-mono leading-relaxed"
+          />
+          <div
+            v-else
+            class="w-full h-full px-6 py-4 overflow-y-auto prose prose-sm max-w-none"
+            v-html="renderedContent"
+          />
+        </div>
+
+        <div class="px-6 py-4 border-t border-gray-100 flex items-center justify-between">
+          <div class="flex items-center gap-3 flex-1">
+            <svg
+              class="w-4 h-4 text-gray-300 shrink-0"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2"
+            >
+              <path
+                d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z"
+              />
+              <line x1="7" y1="7" x2="7.01" y2="7" />
+            </svg>
+            <input
+              v-model="form.tags"
+              type="text"
+              placeholder="tags, separated by commas"
+              class="text-sm text-gray-500 outline-none flex-1 placeholder:text-gray-300"
+            />
+          </div>
+
+          <div class="flex items-center gap-3">
+            <button
+              v-if="editingNote"
+              @click="deleteNote"
+              class="text-sm text-red-400 hover:text-red-600 transition-colors"
+            >
+              Delete
             </button>
             <button
               @click="saveNote"
@@ -117,6 +170,7 @@
 
 <script setup lang="ts">
 import { ref, computed, onMounted } from "vue";
+import { marked } from "marked";
 import AppLayout from "@/components/layout/AppLayout.vue";
 import api from "@/api/axios";
 import type { Note } from "@/types";
@@ -125,6 +179,7 @@ const notes = ref<Note[]>([]);
 const search = ref("");
 const showModal = ref(false);
 const editingNote = ref<Note | null>(null);
+const activeTab = ref<"write" | "preview">("write");
 
 const form = ref({ title: "", content: "", tags: "" });
 
@@ -135,6 +190,8 @@ const filteredNotes = computed(() =>
       n.content.toLowerCase().includes(search.value.toLowerCase()),
   ),
 );
+
+const renderedContent = computed(() => marked(form.value.content || "") as string);
 
 function parseTags(tags: string) {
   return tags
@@ -152,14 +209,17 @@ function formatDate(dateStr: string) {
   });
 }
 
-function openModal(note?: Note) {
-  if (note) {
-    editingNote.value = note;
-    form.value = { title: note.title, content: note.content, tags: note.tags };
-  } else {
-    editingNote.value = null;
-    form.value = { title: "", content: "", tags: "" };
-  }
+function openNote(note: Note) {
+  editingNote.value = note;
+  form.value = { title: note.title, content: note.content, tags: note.tags };
+  activeTab.value = "write";
+  showModal.value = true;
+}
+
+function openModal() {
+  editingNote.value = null;
+  form.value = { title: "", content: "", tags: "" };
+  activeTab.value = "write";
   showModal.value = true;
 }
 
@@ -185,6 +245,10 @@ async function deleteNote() {
   await api.delete(`/notes/${editingNote.value.id}/`);
   notes.value = notes.value.filter((n) => n.id !== editingNote.value!.id);
   closeModal();
+}
+
+function renderPreview(content: string) {
+  return marked(content || "") as string;
 }
 
 onMounted(async () => {

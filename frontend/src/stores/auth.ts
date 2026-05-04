@@ -40,6 +40,7 @@ export const useAuthStore = defineStore("auth", () => {
     refreshToken.value = null;
     localStorage.removeItem("access_token");
     localStorage.removeItem("refresh_token");
+    window.location.href = "/login";
   }
 
   return {

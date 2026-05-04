@@ -31,15 +31,21 @@
           class="bg-white border border-gray-100 rounded-xl p-5 flex gap-4"
         >
           <div class="w-10 h-10 rounded-lg bg-gray-50 flex items-center justify-center shrink-0">
-            <svg class="w-4 h-4 text-gray-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/>
-              <path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/>
+            <svg
+              class="w-4 h-4 text-gray-400"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2"
+            >
+              <path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71" />
+              <path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71" />
             </svg>
           </div>
 
           <div class="flex-1 min-w-0">
             <div class="flex items-start justify-between gap-2">
-
+              <a
                 :href="bookmark.url"
                 target="_blank"
                 class="text-sm font-medium text-gray-900 hover:text-purple-600 transition-colors truncate"
@@ -50,8 +56,14 @@
                 @click="deleteBookmark(bookmark)"
                 class="text-gray-300 hover:text-red-400 transition-colors shrink-0"
               >
-                <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                  <path d="M18 6L6 18M6 6l12 12"/>
+                <svg
+                  class="w-3.5 h-3.5"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="2"
+                >
+                  <path d="M18 6L6 18M6 6l12 12" />
                 </svg>
               </button>
             </div>
@@ -124,50 +136,55 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted } from 'vue'
-import AppLayout from '@/components/layout/AppLayout.vue'
-import api from '@/api/axios'
-import type { Bookmark } from '@/types'
+import { ref, computed, onMounted } from "vue";
+import AppLayout from "@/components/layout/AppLayout.vue";
+import api from "@/api/axios";
+import type { Bookmark } from "@/types";
 
-const bookmarks = ref<Bookmark[]>([])
-const search = ref('')
-const showModal = ref(false)
-const form = ref({ url: '', tags: '' })
+const bookmarks = ref<Bookmark[]>([]);
+const search = ref("");
+const showModal = ref(false);
+const form = ref({ url: "", tags: "" });
 
 const filteredBookmarks = computed(() =>
   bookmarks.value.filter(
     (b) =>
       b.title.toLowerCase().includes(search.value.toLowerCase()) ||
-      b.url.toLowerCase().includes(search.value.toLowerCase())
-  )
-)
+      b.url.toLowerCase().includes(search.value.toLowerCase()),
+  ),
+);
 
 function parseTags(tags: string) {
-  return tags ? tags.split(',').map((t) => t.trim()).filter(Boolean) : []
+  return tags
+    ? tags
+        .split(",")
+        .map((t) => t.trim())
+        .filter(Boolean)
+    : [];
 }
 
 function openModal() {
-  form.value = { url: '', tags: '' }
-  showModal.value = true
+  form.value = { url: "", tags: "" };
+  showModal.value = true;
 }
 
 function closeModal() {
-  showModal.value = false
+  showModal.value = false;
 }
 
 async function saveBookmark() {
-  const { data } = await api.post('/bookmarks/', form.value)
-  bookmarks.value.unshift(data)
-  closeModal()
+  const { data } = await api.post("/bookmarks/", form.value);
+  bookmarks.value.unshift(data);
+  closeModal();
 }
 
 async function deleteBookmark(bookmark: Bookmark) {
-  await api.delete(`/bookmarks/${bookmark.id}/`)
-  bookmarks.value = bookmarks.value.filter((b) => b.id !== bookmark.id)
+  await api.delete(`/bookmarks/${bookmark.id}/`);
+  bookmarks.value = bookmarks.value.filter((b) => b.id !== bookmark.id);
 }
 
 onMounted(async () => {
-  const { data } = await api.get('/bookmarks/')
-  bookmarks.value = data.results ?? data
-})
+  const { data } = await api.get("/bookmarks/");
+  bookmarks.value = data.results ?? data;
+});
 </script>

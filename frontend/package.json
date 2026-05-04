@@ -18,14 +18,17 @@
   "dependencies": {
     "@vueuse/core": "^14.3.0",
     "axios": "^1.16.0",
+    "marked": "^18.0.3",
     "pinia": "^3.0.4",
     "vue": "^3.5.32",
     "vue-router": "^5.0.4"
   },
   "devDependencies": {
+    "@tailwindcss/typography": "^0.5.19",
     "@tailwindcss/vite": "^4.3.0",
     "@tsconfig/node24": "^24.0.4",
     "@types/jsdom": "^28.0.1",
+    "@types/marked": "^5.0.2",
     "@types/node": "^24.12.2",
     "@vitejs/plugin-vue": "^6.0.6",
     "@vitest/eslint-plugin": "^1.6.16",
