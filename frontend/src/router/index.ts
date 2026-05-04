@@ -38,6 +38,11 @@ const router = createRouter({
       component: () => import("@/views/BookmarksView.vue"),
       meta: { requiresAuth: true },
     },
+    {
+      path: "/settings",
+      component: () => import("@/views/SettingsView.vue"),
+      meta: { requiresAuth: true },
+    },
   ],
 });
 
