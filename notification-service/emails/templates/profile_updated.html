@@ -1,0 +1,17 @@
+{% extends "base.html" %} {% block content %}
+<h1>Profile updated</h1>
+<p>Hi {{ username }}, your profile has been successfully updated.</p>
+
+<div class="card">
+    <div class="card-title">Changes made</div>
+    <div class="card-content">
+        {% for change in changes %}
+        <p style="margin: 4px 0">{{ change }}</p>
+        {% endfor %}
+    </div>
+</div>
+
+<div class="divider"></div>
+
+<a href="http://localhost:5173/settings" class="btn">View profile</a>
+{% endblock %}

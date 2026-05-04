@@ -1,0 +1,21 @@
+{% extends "base.html" %} {% block content %}
+<h1>Account deleted</h1>
+<p>
+    Hi {{ username }}, your Daylayer account and all associated data have been
+    permanently deleted.
+</p>
+
+<div class="card">
+    <div class="card-title">What was deleted</div>
+    <div class="card-content">
+        All your notes, tasks and bookmarks have been removed.
+    </div>
+</div>
+
+<div class="divider"></div>
+
+<p style="font-size: 13px; color: #999">
+    We're sorry to see you go. If this was a mistake, you can always create a
+    new account.
+</p>
+{% endblock %}

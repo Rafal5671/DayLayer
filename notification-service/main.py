@@ -6,6 +6,11 @@ from contextlib import asynccontextmanager
 import redis.asyncio as aioredis
 from dotenv import load_dotenv
 from fastapi import FastAPI
+from handlers.account import (
+    handle_account_deleted,
+    handle_password_changed,
+    handle_profile_updated,
+)
 from handlers.bookmark import handle_bookmark_scraped
 from handlers.task import handle_task_deadline
 from handlers.user import handle_user_registered
@@ -18,6 +23,9 @@ HANDLERS = {
     "user.registered": handle_user_registered,
     "bookmark.scraped": handle_bookmark_scraped,
     "task.deadline_today": handle_task_deadline,
+    "account.password_changed": handle_password_changed,
+    "account.profile_updated": handle_profile_updated,
+    "account.deleted": handle_account_deleted,
 }
 
 
