@@ -13,23 +13,35 @@ from .serializers import RegisterSerializer, UserSerializer
 
 
 class RegisterView(generics.CreateAPIView):
+    """Handle user registration and publish user.registered event."""
+
     queryset = User.objects.all()
     serializer_class = RegisterSerializer
     permission_classes = [permissions.AllowAny]
 
     def perform_create(self, serializer):
+        """Save new user and publish registration event to Redis."""
         user = serializer.save()
         publish_user_registered(user.email, user.username)
 
 
 class MeView(APIView):
+    """Handle authenticated user profile retrieval, update and deletion."""
+
     permission_classes = [permissions.IsAuthenticated]
 
     def get(self, request):
+        """Return the authenticated user's profile data."""
         serializer = UserSerializer(request.user)
         return Response(serializer.data)
 
     def patch(self, request):
+        """
+        Update the authenticated user's profile.
+
+        Publishes account.profile_updated event to Redis
+        if username or email has changed.
+        """
         old_username = request.user.username
         old_email = request.user.email
 
@@ -55,6 +67,11 @@ class MeView(APIView):
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
     def delete(self, request):
+        """
+        Permanently delete the authenticated user's account.
+
+        Publishes account.deleted event to Redis before deletion.
+        """
         email = request.user.email
         username = request.user.username
         request.user.delete()
@@ -63,9 +80,17 @@ class MeView(APIView):
 
 
 class ChangePasswordView(APIView):
+    """Handle password change for authenticated users."""
+
     permission_classes = [permissions.IsAuthenticated]
 
     def post(self, request):
+        """
+        Change the authenticated user's password.
+
+        Validates current password before applying the change.
+        Publishes account.password_changed event to Redis on success.
+        """
         current_password = request.data.get("current_password")
         new_password = request.data.get("new_password")
 

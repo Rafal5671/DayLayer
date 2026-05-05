@@ -4,6 +4,8 @@ from .models import Task
 
 
 class TaskSerializer(serializers.ModelSerializer):
+    """Serializer for Task model. Timestamps are read-only."""
+
     class Meta:
         model = Task
         fields = [

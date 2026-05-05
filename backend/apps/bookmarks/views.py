@@ -9,9 +9,23 @@ from .tasks import publish_scrape_job
 
 
 class BookmarkViewSet(viewsets.ModelViewSet):
+    """
+    ViewSet for managing user bookmarks.
+
+    Provides CRUD operations for bookmarks with optional filtering by tags.
+    When a bookmark is created, a scraping job is published to Redis
+    so the scraping microservice can fetch metadata automatically.
+    """
+
     serializer_class = BookmarkSerializer
 
     def get_queryset(self):
+        """
+        Return bookmarks belonging to the authenticated user.
+
+        Supports optional filtering via query parameters:
+        - tags: filter by tag name (case-insensitive partial match)
+        """
         queryset = Bookmark.objects.filter(user=self.request.user)
         tags = self.request.query_params.get("tags")
         if tags:
@@ -19,12 +33,24 @@ class BookmarkViewSet(viewsets.ModelViewSet):
         return queryset
 
     def perform_create(self, serializer):
+        """
+        Save the bookmark and publish a scraping job to Redis.
+
+        The scraping microservice will fetch metadata (title, description,
+        thumbnail) and update the bookmark via the update_scraped endpoint.
+        """
         bookmark = serializer.save(user=self.request.user)
         publish_scrape_job(bookmark.id, bookmark.url, self.request.user.email)
 
     @action(detail=True, methods=["patch"], permission_classes=[permissions.AllowAny])
     def update_scraped(self, request, pk=None):
-        """Internal endpoint for scraping service to update bookmark."""
+        """
+        Internal endpoint for the scraping microservice to update bookmark metadata.
+
+        Protected by a shared secret passed in the X-Internal-Secret header.
+        Not intended for direct use by API clients.
+        """
+
         secret = request.headers.get("X-Internal-Secret")
         if secret != settings.INTERNAL_SERVICE_SECRET:
             return Response({"detail": "Forbidden"}, status=status.HTTP_403_FORBIDDEN)

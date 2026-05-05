@@ -4,6 +4,13 @@ from .models import Bookmark
 
 
 class BookmarkSerializer(serializers.ModelSerializer):
+    """
+    Serializer for Bookmark model.
+
+    Metadata fields (title, description, thumbnail, is_scraped)
+    are read-only as they are populated by the scraping microservice.
+    """
+
     class Meta:
         model = Bookmark
         fields = [

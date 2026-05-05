@@ -2,8 +2,14 @@ from django.contrib.auth.models import User
 from django.db import models
 
 
-# Create your models here.
 class Note(models.Model):
+    """
+    Represents a user note with Markdown content and tags.
+
+    Notes are ordered by last update time, newest first.
+    Each note belongs to a single user and is not visible to others.
+    """
+
     user = models.ForeignKey(User, on_delete=models.CASCADE, related_name="notes")
     title = models.CharField(max_length=255)
     content = models.TextField(blank=True)

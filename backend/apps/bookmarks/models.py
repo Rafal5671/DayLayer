@@ -2,8 +2,17 @@ from django.contrib.auth.models import User
 from django.db import models
 
 
-# Create your models here.
 class Bookmark(models.Model):
+    """
+    Represents a saved URL with automatically scraped metadata.
+
+    When a bookmark is created, a scraping job is published to Redis.
+    The scraping microservice fetches title, description and thumbnail
+    and updates the bookmark via the internal update_scraped endpoint.
+
+    Bookmarks are ordered by creation time, newest first.
+    """
+
     user = models.ForeignKey(User, on_delete=models.CASCADE, related_name="bookmarks")
     url = models.URLField()
     title = models.CharField(max_length=255, blank=True)

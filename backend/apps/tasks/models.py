@@ -2,8 +2,14 @@ from django.contrib.auth.models import User
 from django.db import models
 
 
-# Create your models here.
 class Task(models.Model):
+    """
+    Represents a user task with priority, status and optional deadline.
+
+    Tasks are ordered by creation time, newest first.
+    Each task belongs to a single user and is not visible to others.
+    """
+
     class Priority(models.TextChoices):
         LOW = "low", "Low"
         MEDIUM = "medium", "Medium"
